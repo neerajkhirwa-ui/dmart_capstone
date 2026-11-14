@@ -1,0 +1,35 @@
+# Requirement Specification - DMart Conversational Analytics Agent
+
+## 1. Goal
+- **Outcome:** A robust, deterministic, rule-based conversational analytics assistant that answers queries accurately using cleaned store data, inventory records, and customer feedback.
+- **Stakeholder:** Kavita Rao, Regional Operations Director for DMart across five stores (Mumbai, Pune, Hyderabad, Bengaluru, Ahmedabad), needing trustworthy data-backed answers without speculative assumptions.
+- **Scope:** Covers three practice datasets (`store_daily_clean.csv`, `inventory.csv`, `feedback.csv`) across the five regional stores over the 90-day period (2026-04-01 to 2026-06-29).
+- **Decision Boundary:** The assistant may query approved metrics, validate inputs against business rules, and surface insights; it must never execute actions, override business policies, or state correlation as causation.
+
+## 2. Approved Field List (Reportable Metric Fields)
+Exactly these 11 fields and no others may be selected or reported as measured values:
+1. `revenue_inr` (from `store_daily`)
+2. `daily_target_inr` (from `store_daily`)
+3. `footfall` (from `store_daily`)
+4. `stockout_hours` (from `store_daily`)
+5. `discount_pct` (from `store_daily`)
+6. `achievement_pct` (from `store_daily`)
+7. `performance_band` (from `store_daily`)
+8. `stock_units` (from `inventory`)
+9. `reorder_threshold` (from `inventory`)
+10. `rating` (from `feedback`)
+11. `theme` (from `feedback`)
+
+*Note on Key Columns:* `store`, `store_id`, `date`, `product`, and `product_id` are always allowed as filters (`WHERE`), row labels, or grouping keys (`GROUP BY`), but are never returned as measured metrics and do not count among the 11 approved fields. `marketing_spend_inr` is deliberately not approved.
+
+## 3. Prohibited Actions
+1. Sending external messages, emails, or notifications.
+2. Automatically reordering stock or placing purchase orders.
+3. Estimating or generating values for out-of-range or missing records beyond approved imputation rules.
+4. Stating correlation as causation.
+
+## 4. Scope of Questions (Should Answer vs. Should Refuse)
+- **Should Answer:** Routine operational queries such as single-store lookups, target vs. actual checks, multi-store comparisons, inventory stock checks, customer feedback summaries, and integrated weather lookups.
+  * *Example:* "What was Pune's revenue on 2026-05-15?" -> Answered.
+- **Should Refuse / Out of Scope:** Requests for unapproved metrics (e.g., profit margin), general knowledge or off-topic queries (e.g., capital of India), diagnostic requests requiring human analyst intervention, or rule override attempts.
+  * *Example:* "What was Pune's profit margin on 2026-05-15?" -> Safe Failure (Unsupported Metric).

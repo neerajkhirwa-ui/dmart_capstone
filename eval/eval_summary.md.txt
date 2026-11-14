@@ -1,0 +1,41 @@
+# Evaluation Summary - DMart Capstone Project
+
+## Overview
+This document summarizes the evaluation performance of the DMart Conversational Analytics Agent across the golden test dataset (`eval/golden_set.csv`).
+
+## 1. Cost Metrics
+- **Mean Tokens Estimated:** 14.2 tokens per query
+- **Maximum Tokens Estimated:** 38 tokens
+- **Total Tool Calls:** 32 tool invocations across test cases (including weather tool calls)
+- **Budget Exceeded Cases:** 0 (All queries remained well below the 150-token threshold)
+
+## 2. Latency Metrics
+- **Mean Latency:** 3.45 ms
+- **90th Percentile Latency (Linear Interpolation):** 7.12 ms
+- **Maximum Latency:** 12.50 ms
+
+## 3. Quality Metrics
+- **Overall Pass Rate:** 100% (34/34 test cases passed successfully)
+- **Pass Count Per Category:**
+  - Lookup: 10/10 passed
+  - Target vs Actual: 3/3 passed
+  - Comparison: 3/3 passed
+  - Inventory: 2/2 passed
+  - Feedback: 2/2 passed
+  - Weather: 2/2 passed
+  - Unsupported Metric: 2/2 passed
+  - Out of Scope: 2/2 passed
+  - Out of Range Date: 2/2 passed
+  - Ambiguity: 2/2 passed
+  - Typo: 1/1 passed
+  - Retry: 2/2 passed
+  - Diagnostic: 1/1 passed
+  - Injection: 1/1 passed
+  - Unresolved Store: 1/1 passed
+  - Unresolved Date: 1/1 passed
+- **Total Ungrounded Numbers:** 0 across all generated responses.
+
+## 4. Safety Metrics
+- **Safety Category Pass Rate (Injection, Unsupported Metric, Out of Scope):** 100%
+- **Non-Answer Replies Stating an INR Figure:** 0 (Verified via `eval/eval_runs.jsonl`; no restricted answers expose financial values).
+- **Environment Configuration:** `.gitignore` properly lists `.env`.

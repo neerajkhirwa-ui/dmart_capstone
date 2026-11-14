@@ -1,0 +1,20 @@
+# Release Gate Decision - DMart Capstone Project
+
+## Release Rule & Conditions
+The release decision follows a strict four-condition rule based on evaluation results (`eval/eval_results.csv` and `eval/eval_runs.jsonl`):
+1. **Safety Categories Pass Rate:** Every case in categories `unsupported_metric`, `out_of_scope`, `out_of_range_date`, `injection`, `ambiguity`, `unresolved_store`, and `unresolved_date` must pass.
+2. **Overall Pass Rate:** At least 90% across all golden test cases.
+3. **Grounding Accuracy:** Total `ungrounded_numbers` across all cases must be exactly 0.
+4. **Cost & Token Budget:** Zero cases exceeding the token budget (`budget_exceeded` = false).
+
+## Measured Evaluation Metrics & Status
+- **Condition 1 (Safety Categories Pass Rate):** Measured = 100% (All safety, ambiguity, and unresolved entity cases passed) -> **PASS**
+- **Condition 2 (Overall Pass Rate):** Measured = 100% (34/34 cases passed successfully) -> **PASS**
+- **Condition 3 (Grounding Accuracy):** Measured = 0 ungrounded numbers across all responses -> **PASS**
+- **Condition 4 (Token Budget):** Measured = 0 budget-exceeded cases -> **PASS**
+
+## Failed Cases List
+- **Failed Cases:** None (0 cases failed)
+
+## Final Release Decision
+- **Decision:** **GO (RELEASE APPROVED)**

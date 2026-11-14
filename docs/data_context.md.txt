@@ -1,0 +1,72 @@
+# Data Context - DMart Capstone Project
+
+## 1. Overview of Datasets
+The project utilizes three practice datasets representing store operations, inventory status, and customer feedback across five regional DMart stores (Mumbai, Pune, Hyderabad, Bengaluru, and Ahmedabad) over a 90-day period (2026-04-01 to 2026-06-29).
+
+---
+
+## 2. Dataset Specifications
+
+### Dataset 1: `store_daily_clean.csv`
+- **Description:** Cleaned daily operational metrics per store.
+- **Row Count:** 450 rows (after removing 3 duplicate rows and ensuring clean daily records for 5 stores over 90 days).
+- **Date Range:** 2026-04-01 to 2026-06-29.
+- **Columns & Data Types:**
+  - `date`: string/object (ISO format `YYYY-MM-DD`)
+  - `store_id`: string/object (`S01` to `S05`)
+  - `store`: string/object (City name)
+  - `footfall`: int (Customer count, cleaned and imputed)
+  - `revenue_inr`: float (Daily revenue in INR)
+  - `daily_target_inr`: int/float (Target revenue)
+  - `marketing_spend_inr`: int/float (Marketing expenditure)
+  - `stockout_hours`: float (Stockout duration in hours)
+  - `discount_pct`: float (Average discount percentage)
+  - `revenue_per_footfall`: float (Feature: Revenue divided by footfall)
+  - `marketing_efficiency`: float (Feature: Revenue divided by marketing spend)
+  - `achievement_pct`: float (Feature: Revenue vs target percentage)
+  - `shortfall_inr`: float (Feature: Target minus revenue)
+  - `weekend_flag`: string (`Yes` for Saturday/Sunday, else `No`)
+  - `performance_band`: string (`Excellent`, `Good`, `Poor`)
+- **Data Quality Facts (Part A Guarantees):**
+  - 3 exact duplicate rows removed.
+  - 1 negative footfall anomaly (-150 in Hyderabad on 2026-04-21) set to missing and imputed.
+  - 2 extreme high footfall outliers capped at upper IQR bounds (Mumbai: 6100 $\rightarrow$ 2986.00; Ahmedabad: 9800 $\rightarrow$ 2281.38).
+  - 4 missing footfall values successfully imputed using store-specific medians.
+- **Supported Questions:** Single-store daily lookups, date-range averages, target vs. actual achievement checks, multi-store revenue comparisons, and performance band tracking.
+
+---
+
+### Dataset 2: `inventory.csv`
+- **Description:** Current stock levels and reorder thresholds across products and stores.
+- **Row Count:** 40 rows (5 stores $\times$ 8 products).
+- **Date Range:** None (Snapshot inventory data, no date column).
+- **Columns & Data Types:**
+  - `store_id`: string/object
+  - `store`: string/object
+  - `product_id`: string/object (`P01` to `P08`)
+  - `product`: string/object (Product name and size, e.g., `Amul Milk 1L`)
+  - `stock_units`: int (Current stock quantity)
+  - `reorder_threshold`: int (Minimum stock threshold before reordering)
+- **Data Quality Facts:** No missing values; Amul Milk (`P01`) specifically calibrated across stores.
+- **Supported Questions:** Stock availability checks, identifying stores below reorder thresholds for specific products.
+
+---
+
+### Dataset 3: `feedback.csv`
+- **Description:** Customer feedback ratings and categories.
+- **Row Count:** 200 rows (40 feedback entries per store across 5 stores).
+- **Date Range:** 2026-04-01 to 2026-06-29.
+- **Columns & Data Types:**
+  - `feedback_id`: string/object (`F001` to `F200`)
+  - `store_id`: string/object
+  - `store`: string/object
+  - `date`: string/object (ISO format)
+  - `rating`: int / missing (Customer rating from 1 to 5; contains 12 intentionally unrated rows)
+  - `theme`: string/object (Feedback category: `Stock availability`, `Queue time`, `Pricing`, `Freshness`, `Staff behaviour`)
+- **Data Quality Facts:** 12 unrated rows present; unrated rows are excluded when calculating average ratings.
+- **Supported Questions:** Customer sentiment analysis, average store ratings over rated rows, most frequent customer complaint themes.
+
+---
+
+## 3. Relational Structure
+- All three datasets are linked relationally through the **`store`** (or `store_id`) attribute, enabling cross-dataset insights (e.g., correlating customer feedback themes on stock availability with actual store stockout hours).

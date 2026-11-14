@@ -1,0 +1,38 @@
+# Data Quality Report - DMart Capstone Project
+
+## Dataset Shape
+- **store_daily.csv:** 453 rows and 9 columns
+- **inventory.csv:** 40 rows and 6 columns
+- **feedback.csv:** 200 rows and 6 columns
+
+## Column Data Types & Null Counts
+- `date`: object/str, 0 nulls
+- `store_id`: object/str, 0 nulls
+- `store`: object/str, 0 nulls
+- `footfall`: float/int (contains missing values), 4 missing values (intentionally injected)
+- `revenue_inr`: float, 0 nulls
+- `daily_target_inr`: int/float, 0 nulls
+- `marketing_spend_inr`: int/float, 0 nulls
+- `stockout_hours`: float, 0 nulls
+- `discount_pct`: float, 0 nulls
+
+## Data Quality Issues Found
+- **Exact Duplicates:** 3 duplicate rows were found and appended at the end of `store_daily.csv`.
+- **Footfall Anomalies:** 
+  - Minimum footfall recorded: -150 (impossible negative value in Hyderabad).
+  - Maximum footfall recorded: 9800 (extreme high outlier in Ahmedabad) and 6100 (in Mumbai).
+  - 4 missing/null footfall values across stores.
+
+## Per-Store Footfall Bounds (Q1, Q3, IQR)
+Calculated after removing exact duplicates and treating negative footfall as missing:
+- **Mumbai:** Q1 = 2246.00, Q3 = 2542.00, Lower Bound = 1802.00, Upper Bound = 2986.00 (Outlier: 6100)
+- **Pune:** Q1 = 1434.00, Q3 = 1593.50, Lower Bound = 1194.75, Upper Bound = 1832.75
+- **Hyderabad:** Q1 = 2053.00, Q3 = 2356.00, Lower Bound = 1598.50, Upper Bound = 2810.50
+- **Bengaluru:** Q1 = 1952.00, Q3 = 2211.00, Lower Bound = 1563.50, Upper Bound = 2599.50
+- **Ahmedabad:** Q1 = 1844.50, Q3 = 2019.25, Lower Bound = 1582.38, Upper Bound = 2281.38 (Outlier: 9800)
+
+## Decisions
+1. **Duplicates:** Removed exact duplicate rows (retaining the first occurrence) to avoid double-counting daily metrics.
+2. **Negative Values:** Treated negative footfall (-150) as a data entry error and set it to missing (NaN) so it can be handled via proper imputation rather than deletion.
+3. **Extreme Outliers:** Capped extreme high values (like 9800 and 6100) at their respective upper IQR bounds. We chose capping over deletion because these represent genuine busy business days (like promotional events or festivals) rather than corrupt records, preventing the loss of valuable revenue data.
+4. **Missing Values:** Imputed missing footfall values using each store's own median instead of the mean or zero. The median is robust against outliers and ensures store-specific operational characteristics are preserved accurately.

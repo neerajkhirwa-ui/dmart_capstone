@@ -1,0 +1,54 @@
+# Agent Specification - DMart Conversational Analytics Agent
+
+## 1. Pipeline Table (8 Steps)
+| Step | Name | Deterministic / Generative | Technique / Implementation |
+|---|---|---|---|
+| 1 | Interpret | Deterministic | Rule-based token parsing, keyword matching, and regex pattern matching |
+| 2 | Route | Deterministic | Intent classification rules mapping inputs to Python functions, SQL queries, or tools |
+| 3 | Query | Deterministic | Parameterized SQL execution (`sqlite3` with `?` placeholders) or direct Python data fetch |
+| 4 | Validate | Deterministic | Approved field and table check against the 11 reportable metrics before execution |
+| 5 | Calculate | Deterministic | Aggregations, mean calculations, rounding half-up using Decimal arithmetic |
+| 6 | Synthesize | Generative | Fixed answer templates populated with fetched numeric values and entity tokens |
+| 7 | Ground | Deterministic | Extraction of grounded values from fetched records and comparison against response text |
+| 8 | Record | Deterministic | JSON lines audit logging (`runs.jsonl`) recording latency, tokens, status, and evidence |
+
+---
+
+## 2. Intent Table
+| Intent | Example Question | Route |
+|---|---|---|
+| `lookup` | What was Pune's revenue on 15 May 2026? | Python (single day) / SQL (range) |
+| `target_vs_actual` | Did Pune hit its target on 2026-05-16? | Python function |
+| `comparison` | Which store had the highest average revenue in May 2026? | SQL query |
+| `inventory` | Which stores are below the reorder threshold for Amul Milk? | SQL query |
+| `feedback` | What are customers saying about Hyderabad? | SQL query |
+| `weather` | What was the weather in Pune on 2026-05-16? | Weather Tool (`tools/weather.py`) |
+| `unsupported_metric` | What was Pune's profit margin on 2026-05-15? | None (Safe Failure) |
+| `out_of_scope` | What is the capital of India? | None (Escalated) |
+| `diagnostic` | Why is Pune's revenue so low? | None (Escalated) |
+
+---
+
+## 3. Handling Rules & Status Decision Table
+- **Entity Resolution:** Store names matched via exact match, explicit alias (`Bangalore` $\rightarrow$ `Bengaluru`), or fuzzy matching (`difflib.SequenceMatcher` with a candidate threshold of 0.7). Metrics mapped using a closed synonym list. Dates parsed via closed grammar (`YYYY-MM-DD`, `D Month YYYY`, `yesterday`, `between <date> and <date>`).
+- **Confidence & Threshold:** Computed as the minimum confidence over required entities. If confidence is below **0.7**, the status becomes `Clarification Needed`.
+- **Session Context:** Entity state is maintained per session. Required entities missing from a query are inherited from the last resolved values in the same session. Unresolved entities or ambiguous pairs are never inherited.
+- **Status Decision Table:**
+  1. `Answered`: Intent successfully understood, fetched, validated, and grounded with no operational alerts.
+  2. `Drafted`: Answer is composed but held for review because a target vs. actual check resulted in the `Poor` performance band (<75% achievement).
+  3. `Clarification Needed`: Triggered by low confidence (<0.7), missing required entities, unresolved named stores/dates, or ambiguous entity pairs.
+  4. `Escalated`: Triggered by out-of-scope questions, diagnostic queries, or exceeding the maximum retry attempts (3 failures).
+  5. `Safe Failure`: Triggered by requesting unapproved metrics, dates outside the valid range (2026-04-01 to 2026-06-29), or encountering missing records.
+
+---
+
+## 4. Escalation and Retry Rules
+- **Retries:** Failed data queries are retried up to a maximum of **3 total attempts** (1 initial try + 2 retries).
+- **Exhaustion:** If all 3 attempts fail, the query execution halts and the status automatically transitions to `Escalated`.
+
+---
+
+## 5. Success Criteria, Completion States & Test-Case Categories
+- **Success Criteria:** Every reported numeric value must trace directly to a fetched database record or tool result (`ungrounded_numbers == 0`).
+- **Completion States:** Tracked via audit logs (`runs.jsonl`) recording execution metrics, latency, token estimation, and tool calls.
+- **Test-Case Categories for Part D:** `lookup`, `target_vs_actual`, `comparison`, `inventory`, `feedback`, `weather`, `unsupported_metric`, `out_of_scope`, `diagnostic`, `ambiguity`, `typo`, `injection`, `out_of_range_date`, `unresolved_store`, and `unresolved_date`.
